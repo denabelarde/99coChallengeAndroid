@@ -9,7 +9,7 @@ import android.database.Cursor;
 import com.ninetyninecochallenge.places.dto.StoreDto;
 import com.ninetyninecochallenge.places.helpers.DatabaseHelper;
 
-public class StoreModel {
+public class FavoriteStoreModel {
 	public static int count(Context context) {
 		DatabaseHelper dbhelper = new DatabaseHelper(context);
 		String[] columns = { "count(_id)" };
@@ -25,6 +25,30 @@ public class StoreModel {
 		dbhelper.close();
 
 		return reportcount;
+	}
+
+	public static Boolean isStoreFavorite(Context context, String place_id) {
+		DatabaseHelper dbhelper = new DatabaseHelper(context);
+		String[] columns = { "count(_id)" };
+		int storecount = 0;
+		boolean result = false;
+		Cursor store = dbhelper.query("favoritestores", columns, "place_id=?",
+				new String[] { place_id }, null, null, null);
+
+		if (store.moveToFirst()) {
+			storecount = store.getInt(0);
+		}
+
+		if (storecount > 0) {
+			result = true;
+		} else {
+			result = false;
+		}
+
+		store.close();
+		dbhelper.close();
+
+		return result;
 	}
 
 	public static ArrayList<StoreDto> getAllFavorites(Context context) {
@@ -67,6 +91,7 @@ public class StoreModel {
 		values.put("lng", storeDto.getLonghi());
 		values.put("icon", storeDto.getIcon());
 		values.put("datecreated", storeDto.getDatecreated());
+
 		return dbhelper.insert("favoritestores", values);
 	}
 
@@ -94,11 +119,12 @@ public class StoreModel {
 
 	}
 
-	public static void deletSingleUser(Context context, int _id) {
+	public static void deleteSingleFavoriteStore(Context context, String place_id) {
 
 		DatabaseHelper dbhelper = new DatabaseHelper(context);
-		System.out.println(dbhelper.delete("favoritestores", "_id=?",
-				new String[] { _id + "" }) + " <--- favorite store Deleted!");
+		System.out.println(dbhelper.delete("favoritestores", "place_id=?",
+				new String[] { place_id + "" })
+				+ " <--- favorite store Deleted!");
 
 	}
 

@@ -43,7 +43,7 @@ public class MainActivity extends BaseActivity {
 	SupportMapFragment supportMap;
 	Circle circlemarker;
 	MyLocation myLocation;
-	String apiKey = "AIzaSyCkkNyh0sCgVyXMwvrsg4Gb1w7CxlH1RUg";
+//	String apiKey;
 	String nextPageURL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?pagetoken=";
 	String apiURL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=";
 	String query = "&rankby=distance&types=food&key=";
@@ -161,6 +161,12 @@ public class MainActivity extends BaseActivity {
 									storeMap.get(arg0.getId()).getPlace_id());
 							intent.putExtra("storename",
 									storeMap.get(arg0.getId()).getName());
+							intent.putExtra("latitude",
+									storeMap.get(arg0.getId()).getLat());
+							intent.putExtra("longhitude",
+									storeMap.get(arg0.getId()).getLonghi());
+							intent.putExtra("icon", storeMap.get(arg0.getId())
+									.getIcon());
 							startActivity(intent);
 							overridePendingTransition(R.anim.slide_in_up,
 									R.anim.slide_in_up_exit);
@@ -254,10 +260,10 @@ public class MainActivity extends BaseActivity {
 				// try {
 				if (nextPageToken.isEmpty()) {
 					jsonObjectParent = jParser.getJSONFromUrl2(apiURL
-							+ location + query + apiKey);
+							+ location + query + getResources().getString(R.string.apikey));
 				} else {
 					jsonObjectParent = jParser.getJSONFromUrl2(nextPageURL
-							+ nextPageToken + nextPageQuery + apiKey);
+							+ nextPageToken + nextPageQuery + getResources().getString(R.string.apikey));
 				}
 
 				if (jParser.getResponseCode() == 200) {
@@ -275,7 +281,8 @@ public class MainActivity extends BaseActivity {
 						JSONObject currentObject = jsonObjectResults
 								.getJSONObject(i);
 						StoreDto storeDto = new StoreDto();
-						storeDto.setPlace_id(currentObject.getString(TAG_PLACE_ID));
+						storeDto.setPlace_id(currentObject
+								.getString(TAG_PLACE_ID));
 						storeDto.setName(currentObject.getString(TAG_NAME));
 						storeDto.setIcon(currentObject.getString(TAG_ICON));
 						storeDto.setLat(currentObject
