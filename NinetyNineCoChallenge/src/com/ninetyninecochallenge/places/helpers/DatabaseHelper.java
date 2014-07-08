@@ -15,8 +15,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
- 
-	
+
 	// The Android's default system path of your application database.
 	static final int DB_VERSION = 1;
 	static final String DB_NAME = "99cochallenge";
