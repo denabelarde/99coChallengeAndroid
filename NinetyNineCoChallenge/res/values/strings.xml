@@ -9,5 +9,6 @@
     <string name="left">Left</string>
     <string name="right">Right</string>
     <string name="favorites">List of favorites</string>
+    <string name="more_results">more results</string>
 
 </resources>

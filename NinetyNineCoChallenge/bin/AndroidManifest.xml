@@ -43,7 +43,7 @@
             android:label="Marker" >
         </activity>
         <activity
-            android:name="com.ninetyninecochallenge.places.NearYou"
+            android:name="com.ninetyninecochallenge.places.StoreDetails"
             android:label="@string/title_activity_near_you" >
         </activity>
     </application>

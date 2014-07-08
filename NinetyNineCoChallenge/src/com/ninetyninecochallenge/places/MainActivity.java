@@ -2,6 +2,7 @@ package com.ninetyninecochallenge.places;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -16,6 +17,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -42,9 +44,12 @@ public class MainActivity extends BaseActivity {
 	Circle circlemarker;
 	MyLocation myLocation;
 	String apiKey = "AIzaSyCkkNyh0sCgVyXMwvrsg4Gb1w7CxlH1RUg";
+	String nextPageURL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?pagetoken=";
 	String apiURL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=";
 	String query = "&rankby=distance&types=food&key=";
+	String nextPageQuery = "&key=";
 	ArrayList<StoreDto> storeList = new ArrayList<StoreDto>();
+	HashMap<String, StoreDto> storeMap = new HashMap<String, StoreDto>();
 	String nextPageToken = "";
 	String TAG_NEXTPAGE = "next_page_token";
 	String TAG_RESULTS = "results";
@@ -55,6 +60,8 @@ public class MainActivity extends BaseActivity {
 	String TAG_LAT = "lat";
 	String TAG_LNG = "lng";
 	String TAG_ICON = "icon";
+	RelativeLayout moreResultsBtn;
+	int currentStorelistIndex = 0;
 
 	public MainActivity() {
 		super(R.string.favorites);
@@ -66,6 +73,16 @@ public class MainActivity extends BaseActivity {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.content_frame);
+
+		moreResultsBtn = (RelativeLayout) findViewById(R.id.moreResultsBtn);
+		moreResultsBtn.setVisibility(View.GONE);
+		supportMap = ((SupportMapFragment) getSupportFragmentManager()
+				.findFragmentById(R.id.map23));
+
+		myMap = supportMap.getMap();
+		myMap.getUiSettings().setZoomControlsEnabled(false);
+		myMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+
 		showCurrentLocation();
 	}
 
@@ -85,13 +102,6 @@ public class MainActivity extends BaseActivity {
 		if (hasLocation == true) {
 			// this.lat = lat;
 			// this.longhi = longhi;
-
-			supportMap = ((SupportMapFragment) getSupportFragmentManager()
-					.findFragmentById(R.id.map23));
-
-			myMap = supportMap.getMap();
-			myMap.getUiSettings().setZoomControlsEnabled(false);
-			myMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
 			cameraPosition = new CameraPosition(new LatLng(lat, longhi), 15, 0,
 					0);
@@ -140,16 +150,27 @@ public class MainActivity extends BaseActivity {
 				public void onInfoWindowClick(Marker arg0) {
 					// TODO Auto-generated method stub
 
-					if (arg0.getTitle().equalsIgnoreCase("marker1")) {
-						Intent i = new Intent(MainActivity.this,
-								FirstMarker.class);
-						i.putExtra("markertitle", arg0.getTitle().toString());
-						startActivity(i);
-					} else {
-						Toast.makeText(getApplicationContext(),
-								"No Such Activity to called upon",
-								Toast.LENGTH_LONG).show();
+					System.out.println(arg0.getId() + " <--- MarkerID");
+
+					if (!arg0.getTitle()
+							.equalsIgnoreCase("My Current Location")) {
+						if (!arg0.getId().isEmpty()) {
+							Intent intent = new Intent(MainActivity.this,
+									StoreDetails.class);
+							intent.putExtra("place_id",
+									storeMap.get(arg0.getId()).getPlace_id());
+							intent.putExtra("storename",
+									storeMap.get(arg0.getId()).getName());
+							startActivity(intent);
+							overridePendingTransition(R.anim.slide_in_up,
+									R.anim.slide_in_up_exit);
+
+						} else {
+							Toast.makeText(getApplicationContext(),
+									"No MarkerID", Toast.LENGTH_LONG).show();
+						}
 					}
+
 				}
 			});
 
@@ -164,7 +185,7 @@ public class MainActivity extends BaseActivity {
 
 	public void showNearYou(View view) {
 
-		Intent intent = new Intent(MainActivity.this, NearYou.class);
+		Intent intent = new Intent(MainActivity.this, StoreDetails.class);
 		startActivity(intent);
 		overridePendingTransition(R.anim.slide_in_up, R.anim.slide_in_up_exit);
 
@@ -206,8 +227,15 @@ public class MainActivity extends BaseActivity {
 		@Override
 		protected void onPreExecute() {
 			// TODO Auto-generated method stub
-			Toast.makeText(MainActivity.this, "Retrieving nearest shops....",
-					Toast.LENGTH_LONG).show();
+			if (nextPageToken.isEmpty()) {
+				Toast.makeText(MainActivity.this,
+						"Retrieving nearest shops....", Toast.LENGTH_LONG)
+						.show();
+			} else {
+				Toast.makeText(MainActivity.this, "Retrieving more shops....",
+						Toast.LENGTH_LONG).show();
+			}
+
 			System.out.println("Started the asynctask");
 			super.onPreExecute();
 		}
@@ -217,7 +245,6 @@ public class MainActivity extends BaseActivity {
 			// Simulates a background job.
 
 			jsonObjectParent = new JSONObject();
-			storeList = new ArrayList<StoreDto>();
 
 			// Get 15 new listitems
 			// if (jParser.checkServer(url)) {
@@ -225,12 +252,22 @@ public class MainActivity extends BaseActivity {
 				// Getting Array of Contacts
 
 				// try {
-				jsonObjectParent = jParser.getJSONFromUrl2(apiURL + location
-						+ query + apiKey);
+				if (nextPageToken.isEmpty()) {
+					jsonObjectParent = jParser.getJSONFromUrl2(apiURL
+							+ location + query + apiKey);
+				} else {
+					jsonObjectParent = jParser.getJSONFromUrl2(nextPageURL
+							+ nextPageToken + nextPageQuery + apiKey);
+				}
 
 				if (jParser.getResponseCode() == 200) {
+					try {
+						nextPageToken = jsonObjectParent
+								.getString(TAG_NEXTPAGE);
+					} catch (Exception e) {
+						nextPageToken = "";
+					}
 
-					nextPageToken = jsonObjectParent.getString(TAG_NEXTPAGE);
 					jsonObjectResults = jsonObjectParent
 							.getJSONArray(TAG_RESULTS);
 
@@ -238,7 +275,7 @@ public class MainActivity extends BaseActivity {
 						JSONObject currentObject = jsonObjectResults
 								.getJSONObject(i);
 						StoreDto storeDto = new StoreDto();
-						storeDto.setPlace_id(TAG_PLACE_ID);
+						storeDto.setPlace_id(currentObject.getString(TAG_PLACE_ID));
 						storeDto.setName(currentObject.getString(TAG_NAME));
 						storeDto.setIcon(currentObject.getString(TAG_ICON));
 						storeDto.setLat(currentObject
@@ -266,6 +303,13 @@ public class MainActivity extends BaseActivity {
 			// TODO Auto-generated method stub
 			Toast.makeText(MainActivity.this, "Plotting shops on map....",
 					Toast.LENGTH_LONG).show();
+			if (nextPageToken.isEmpty()) {
+				moreResultsBtn.setVisibility(View.GONE);
+
+			} else {
+				moreResultsBtn.setVisibility(View.VISIBLE);
+			}
+
 			plotAllStores();
 			super.onPostExecute(result);
 		}
@@ -273,10 +317,18 @@ public class MainActivity extends BaseActivity {
 
 	public void plotAllStores() {
 
-		for (StoreDto storeDto : storeList) {
-			new addMarkerAsync(storeDto).execute();
-		}
+		// for (StoreDto storeDto : storeList) {
+		// new addMarkerAsync(storeDto).execute();
+		// }
 
+		System.out.print(currentStorelistIndex
+				+ " <<<<<<<<< currentStorelistIndex");
+		int y = currentStorelistIndex;
+		for (int x = y; x < storeList.size(); x++) {
+			new addMarkerAsync(storeList.get(x)).execute();
+			currentStorelistIndex++;
+		}
+		currentStorelistIndex++;
 	}
 
 	class addMarkerAsync extends AsyncTask<Void, Void, Void> {
@@ -312,11 +364,18 @@ public class MainActivity extends BaseActivity {
 
 			super.onPostExecute(result);
 
-			myMap.addMarker(new MarkerOptions()
-					.position(
-							new LatLng(storeDto.getLat(), storeDto.getLonghi()))
-					.icon(BitmapDescriptorFactory.fromBitmap(bmp))
-					.title(storeDto.getName()));
+			String markerID = myMap.addMarker(
+					new MarkerOptions()
+							.position(
+									new LatLng(storeDto.getLat(), storeDto
+											.getLonghi()))
+							.icon(BitmapDescriptorFactory.fromBitmap(bmp))
+							.title(storeDto.getName())
+							.snippet(
+									storeDto.getLat() + ","
+											+ storeDto.getLonghi())).getId();
+			System.out.println(markerID + " <===MarkerID");
+			storeMap.put(markerID, storeDto);
 		}
 	}
 
@@ -333,6 +392,14 @@ public class MainActivity extends BaseActivity {
 
 	public void reCalculateLocations(View view) {
 		myMap.clear();
+		nextPageToken = "";
+		storeList = new ArrayList<StoreDto>();
+		storeMap = new HashMap<String, StoreDto>();
+		currentStorelistIndex = 0;
 		showCurrentLocation();
+	}
+
+	public void showMoreResults(View view) {
+		new getNearByShops("").execute();
 	}
 }

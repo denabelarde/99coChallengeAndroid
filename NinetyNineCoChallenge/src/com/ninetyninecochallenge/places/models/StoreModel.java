@@ -101,20 +101,5 @@ public class StoreModel {
 				new String[] { _id + "" }) + " <--- favorite store Deleted!");
 
 	}
-	// public static int countByGreaterDate(Context context, String date) {
-	// DatabaseHelper dbhelper = new DatabaseHelper(context);
-	// String[] columns = { "count(_id)" };
-	// int reportcount = 0;
-	//
-	// Cursor report = dbhelper.query("users", columns, "datelogin>?",
-	// new String[] { date }, null, null, null);
-	//
-	// if (report.moveToFirst()) {
-	// reportcount = report.getInt(0);
-	// }
-	// report.close();
-	// dbhelper.close();
-	//
-	// return reportcount;
-	// }
+
 }
