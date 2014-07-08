@@ -184,10 +184,10 @@ public class MyLocation {
 		String location = "";
 		if (loc != null) {
 			location = loc.getLatitude() + "," + loc.getLongitude();
-			((MainActivity) mContext).showCurrentLocation(true,
+			((MainActivity) mContext).plotCurrentLocation(true,
 					loc.getLatitude(), loc.getLongitude());
 		} else {
-			((MainActivity) mContext).showCurrentLocation(false, 0, 0);
+			((MainActivity) mContext).plotCurrentLocation(false, 0, 0);
 		}
 
 		System.out

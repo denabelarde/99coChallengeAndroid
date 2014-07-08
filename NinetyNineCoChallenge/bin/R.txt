@@ -73,9 +73,10 @@ int drawable common_signin_btn_text_normal_dark 0x7f020014
 int drawable common_signin_btn_text_normal_light 0x7f020015
 int drawable common_signin_btn_text_pressed_dark 0x7f020016
 int drawable common_signin_btn_text_pressed_light 0x7f020017
-int drawable ic_launcher 0x7f020018
-int drawable shadow 0x7f020019
-int drawable shadowright 0x7f02001a
+int drawable ic_action_location_found 0x7f020018
+int drawable ic_launcher 0x7f020019
+int drawable shadow 0x7f02001a
+int drawable shadowright 0x7f02001b
 int id LinearLayout1 0x7f05000b
 int id action_settings 0x7f050015
 int id button1 0x7f05000f

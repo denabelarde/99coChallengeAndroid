@@ -64,9 +64,14 @@ public class MainActivity extends BaseActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
 		setContentView(R.layout.content_frame);
-		
+		showCurrentLocation();
+	}
+
+	public void showCurrentLocation() {
+		Toast.makeText(this, "Retrieving current location....",
+				Toast.LENGTH_LONG).show();
 		myLocation = new MyLocation(MainActivity.this);
 		if (myLocation.canGetLocation() == true) {
 			myLocation.getLocation();
@@ -75,7 +80,7 @@ public class MainActivity extends BaseActivity {
 		}
 	}
 
-	public void showCurrentLocation(boolean hasLocation, double lat,
+	public void plotCurrentLocation(boolean hasLocation, double lat,
 			double longhi) {
 		if (hasLocation == true) {
 			// this.lat = lat;
@@ -201,6 +206,8 @@ public class MainActivity extends BaseActivity {
 		@Override
 		protected void onPreExecute() {
 			// TODO Auto-generated method stub
+			Toast.makeText(MainActivity.this, "Retrieving nearest shops....",
+					Toast.LENGTH_LONG).show();
 			System.out.println("Started the asynctask");
 			super.onPreExecute();
 		}
@@ -257,6 +264,8 @@ public class MainActivity extends BaseActivity {
 		@Override
 		protected void onPostExecute(String result) {
 			// TODO Auto-generated method stub
+			Toast.makeText(MainActivity.this, "Plotting shops on map....",
+					Toast.LENGTH_LONG).show();
 			plotAllStores();
 			super.onPostExecute(result);
 		}
@@ -320,5 +329,10 @@ public class MainActivity extends BaseActivity {
 		getSlidingMenu().setShadowDrawable(R.drawable.shadow);
 
 		super.onResume();
+	}
+
+	public void reCalculateLocations(View view) {
+		myMap.clear();
+		showCurrentLocation();
 	}
 }

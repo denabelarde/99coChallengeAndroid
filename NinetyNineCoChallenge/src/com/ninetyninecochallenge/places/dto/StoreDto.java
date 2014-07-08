@@ -1,11 +1,22 @@
 package com.ninetyninecochallenge.places.dto;
 
 public class StoreDto {
+
+	int _id;
 	String place_id;
 	String name;
 	double lat;
 	double longhi;
 	String icon;
+	String datecreated;
+
+	public int get_id() {
+		return _id;
+	}
+
+	public void set_id(int _id) {
+		this._id = _id;
+	}
 
 	public String getPlace_id() {
 		return place_id;
@@ -45,6 +56,14 @@ public class StoreDto {
 
 	public void setIcon(String icon) {
 		this.icon = icon;
+	}
+
+	public String getDatecreated() {
+		return datecreated;
+	}
+
+	public void setDatecreated(String datecreated) {
+		this.datecreated = datecreated;
 	}
 
 }
