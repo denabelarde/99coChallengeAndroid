@@ -7,6 +7,7 @@ public class StoreDto {
 	String name;
 	double lat;
 	double longhi;
+	String address;
 	String icon;
 	String datecreated;
 
@@ -48,6 +49,14 @@ public class StoreDto {
 
 	public void setLonghi(double longhi) {
 		this.longhi = longhi;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
 	}
 
 	public String getIcon() {

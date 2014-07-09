@@ -14,5 +14,8 @@
     <string name="paragraph">Store Details Here</string>
     <string name="nophoto_str">No Photo Available</string>
     <string name="apikey">AIzaSyCkkNyh0sCgVyXMwvrsg4Gb1w7CxlH1RUg</string>
-
+    <string name="refresh_location">Refresh Current Location</string>
+    <string name="load_more_results">Load more results</string>
+    <string name="nointernet_description">No internet detected! Please connect to a wifi/mobile data network to obtain best results</string>
+	<string name="nointernet_string">No Internet Connection!</string>
 </resources>

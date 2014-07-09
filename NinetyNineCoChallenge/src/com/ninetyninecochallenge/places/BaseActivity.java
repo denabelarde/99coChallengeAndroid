@@ -25,19 +25,20 @@ public class BaseActivity extends SlidingFragmentActivity {
 		super.onCreate(savedInstanceState);
 
 		setTitle(mTitleRes);
-
+		
 		// set the Behind View
 		setBehindContentView(R.layout.menu_frame);
-		if (savedInstanceState == null) {
-			FragmentTransaction t = this.getSupportFragmentManager()
-					.beginTransaction();
-			mFrag = new SampleListFragment();
-			t.replace(R.id.menu_frame, mFrag);
-			t.commit();
-		} else {
-			mFrag = (ListFragment) this.getSupportFragmentManager()
-					.findFragmentById(R.id.menu_frame);
-		}
+		System.out.println("Base Activity Oncreate");
+//		if (savedInstanceState == null) {
+//			FragmentTransaction t = this.getSupportFragmentManager()
+//					.beginTransaction();
+//			mFrag = new FavoriteListFragment();
+//			t.replace(R.id.menu_frame, mFrag);
+//			t.commit();
+//		} else {
+//			mFrag = (ListFragment) this.getSupportFragmentManager()
+//					.findFragmentById(R.id.menu_frame);
+//		}
 
 		// customize the SlidingMenu
 		SlidingMenu sm = getSlidingMenu();

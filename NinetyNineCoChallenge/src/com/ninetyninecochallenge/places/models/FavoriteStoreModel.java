@@ -68,8 +68,9 @@ public class FavoriteStoreModel {
 				storeDto.setName(store.getString(2));
 				storeDto.setLat(Double.parseDouble(store.getString(3)));
 				storeDto.setLonghi(Double.parseDouble(store.getString(4)));
-				storeDto.setIcon(store.getString(5));
-				storeDto.setDatecreated(store.getString(6));
+				storeDto.setAddress(store.getString(5));
+				storeDto.setIcon(store.getString(6));
+				storeDto.setDatecreated(store.getString(7));
 				storeList.add(storeDto);
 			} while (store.moveToNext());
 
@@ -89,6 +90,7 @@ public class FavoriteStoreModel {
 		values.put("name", storeDto.getName());
 		values.put("lat", storeDto.getLat());
 		values.put("lng", storeDto.getLonghi());
+		values.put("address", storeDto.getAddress());
 		values.put("icon", storeDto.getIcon());
 		values.put("datecreated", storeDto.getDatecreated());
 
@@ -119,7 +121,8 @@ public class FavoriteStoreModel {
 
 	}
 
-	public static void deleteSingleFavoriteStore(Context context, String place_id) {
+	public static void deleteSingleFavoriteStore(Context context,
+			String place_id) {
 
 		DatabaseHelper dbhelper = new DatabaseHelper(context);
 		System.out.println(dbhelper.delete("favoritestores", "place_id=?",

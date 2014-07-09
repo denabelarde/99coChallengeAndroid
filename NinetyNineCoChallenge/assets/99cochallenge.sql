@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS `favoritestores` (
   `name` text NOT NULL,
   `lat` text NOT NULL,
   `lng` text NOT NULL,
+  `address` text NOT NULL,
   `icon` text NOT NULL,
   `datecreated` text NOT NULL
 );

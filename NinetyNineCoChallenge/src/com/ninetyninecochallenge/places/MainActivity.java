@@ -9,9 +9,12 @@ import org.json.JSONObject;
 
 import android.animation.ValueAnimator;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
@@ -33,6 +36,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.ninetyninecochallenge.places.dto.StoreDto;
+import com.ninetyninecochallenge.places.helpers.AlertDialogHelper;
 import com.ninetyninecochallenge.places.helpers.MyLocation;
 
 public class MainActivity extends BaseActivity {
@@ -43,7 +47,7 @@ public class MainActivity extends BaseActivity {
 	SupportMapFragment supportMap;
 	Circle circlemarker;
 	MyLocation myLocation;
-//	String apiKey;
+	// String apiKey;
 	String nextPageURL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?pagetoken=";
 	String apiURL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=";
 	String query = "&rankby=distance&types=food&key=";
@@ -62,6 +66,8 @@ public class MainActivity extends BaseActivity {
 	String TAG_ICON = "icon";
 	RelativeLayout moreResultsBtn;
 	int currentStorelistIndex = 0;
+	AlertDialogHelper alertDialogHelper;
+	LatLng userLocation;
 
 	public MainActivity() {
 		super(R.string.favorites);
@@ -82,19 +88,33 @@ public class MainActivity extends BaseActivity {
 		myMap = supportMap.getMap();
 		myMap.getUiSettings().setZoomControlsEnabled(false);
 		myMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-
+		alertDialogHelper = new AlertDialogHelper();
 		showCurrentLocation();
 	}
 
 	public void showCurrentLocation() {
-		Toast.makeText(this, "Retrieving current location....",
-				Toast.LENGTH_LONG).show();
-		myLocation = new MyLocation(MainActivity.this);
-		if (myLocation.canGetLocation() == true) {
-			myLocation.getLocation();
+
+		if (checkInternetConnection() == true) {
+			Toast.makeText(this, "Retrieving current location....",
+					Toast.LENGTH_LONG).show();
+			myLocation = new MyLocation(MainActivity.this);
+			if (myLocation.canGetLocation() == true) {
+				myMap.clear();
+				nextPageToken = "";
+				storeList = new ArrayList<StoreDto>();
+				storeMap = new HashMap<String, StoreDto>();
+				currentStorelistIndex = 0;
+				myLocation.getLocation();
+			} else {
+				myLocation.showSettingsAlert();
+			}
 		} else {
-			myLocation.showSettingsAlert();
+			alertDialogHelper.alertMessage(
+					getResources().getString(R.string.nointernet_string),
+					getResources().getString(R.string.nointernet_description),
+					MainActivity.this);
 		}
+
 	}
 
 	public void plotCurrentLocation(boolean hasLocation, double lat,
@@ -102,6 +122,7 @@ public class MainActivity extends BaseActivity {
 		if (hasLocation == true) {
 			// this.lat = lat;
 			// this.longhi = longhi;
+			userLocation = new LatLng(lat, longhi);
 
 			cameraPosition = new CameraPosition(new LatLng(lat, longhi), 15, 0,
 					0);
@@ -202,20 +223,38 @@ public class MainActivity extends BaseActivity {
 
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
+		if (nextPageToken.isEmpty()) {
+			menu.getItem(1).setVisible(false);
+		} else {
+			menu.getItem(1).setVisible(true);
+		}
 		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
-		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
-		// int id = item.getItemId();
-		// if (id == R.id.action_settings) {
-		// return true;
-		// }
 
-		// onBackPressed();
+		int id = item.getItemId();
+		if (id == R.id.refresh_location) {
+
+			showCurrentLocation();
+
+			return true;
+		} else if (id == R.id.load_more_results) {
+
+			if (checkInternetConnection() == true) {
+				new getNearByShops("").execute();
+			} else {
+				alertDialogHelper.alertMessage(
+						getResources().getString(R.string.nointernet_string),
+						getResources().getString(
+								R.string.nointernet_description),
+						MainActivity.this);
+			}
+
+			return true;
+		}
+
 		return super.onOptionsItemSelected(item);
 	}
 
@@ -252,18 +291,16 @@ public class MainActivity extends BaseActivity {
 
 			jsonObjectParent = new JSONObject();
 
-			// Get 15 new listitems
-			// if (jParser.checkServer(url)) {
 			try {
-				// Getting Array of Contacts
 
-				// try {
 				if (nextPageToken.isEmpty()) {
 					jsonObjectParent = jParser.getJSONFromUrl2(apiURL
-							+ location + query + getResources().getString(R.string.apikey));
+							+ location + query
+							+ getResources().getString(R.string.apikey));
 				} else {
 					jsonObjectParent = jParser.getJSONFromUrl2(nextPageURL
-							+ nextPageToken + nextPageQuery + getResources().getString(R.string.apikey));
+							+ nextPageToken + nextPageQuery
+							+ getResources().getString(R.string.apikey));
 				}
 
 				if (jParser.getResponseCode() == 200) {
@@ -296,8 +333,6 @@ public class MainActivity extends BaseActivity {
 
 				}
 
-				// looping through All Contacts
-
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -315,18 +350,15 @@ public class MainActivity extends BaseActivity {
 
 			} else {
 				moreResultsBtn.setVisibility(View.VISIBLE);
-			}
 
+			}
+			invalidateOptionsMenu();
 			plotAllStores();
 			super.onPostExecute(result);
 		}
 	}
 
 	public void plotAllStores() {
-
-		// for (StoreDto storeDto : storeList) {
-		// new addMarkerAsync(storeDto).execute();
-		// }
 
 		System.out.print(currentStorelistIndex
 				+ " <<<<<<<<< currentStorelistIndex");
@@ -394,19 +426,41 @@ public class MainActivity extends BaseActivity {
 
 		getSlidingMenu().setShadowDrawable(R.drawable.shadow);
 
+		getSlidingMenu().setSecondaryMenu(R.layout.menu_frame_two);
+		getSlidingMenu().setSecondaryShadowDrawable(R.drawable.shadowright);
+		getSupportFragmentManager().beginTransaction()
+				.replace(R.id.menu_frame_two, new FavoriteListFragment())
+				.commit();
 		super.onResume();
 	}
 
 	public void reCalculateLocations(View view) {
-		myMap.clear();
-		nextPageToken = "";
-		storeList = new ArrayList<StoreDto>();
-		storeMap = new HashMap<String, StoreDto>();
-		currentStorelistIndex = 0;
+
 		showCurrentLocation();
+
 	}
 
 	public void showMoreResults(View view) {
-		new getNearByShops("").execute();
+		if (checkInternetConnection() == true) {
+			new getNearByShops("").execute();
+		} else {
+			alertDialogHelper.alertMessage(
+					getResources().getString(R.string.nointernet_string),
+					getResources().getString(R.string.nointernet_description),
+					MainActivity.this);
+		}
+
+	}
+
+	public boolean checkInternetConnection() {
+		final ConnectivityManager conMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo netInfo = conMgr.getActiveNetworkInfo();
+		// should check null because in air plan mode it will be null
+		if (netInfo != null && netInfo.isConnected()) {
+			return true;
+		} else {
+			return false;
+		}
+
 	}
 }

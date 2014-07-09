@@ -155,6 +155,7 @@ public class StoreDetails extends Activity {
 					storeDto.setLat(lat);
 					storeDto.setLonghi(lng);
 					storeDto.setIcon(icon);
+					storeDto.setAddress(storeDetailsDto.getStoreAddress());
 					storeDto.setDatecreated(new Date().toString());
 					FavoriteStoreModel.insertFavoriteStore(StoreDetails.this,
 							storeDto);
@@ -271,21 +272,22 @@ public class StoreDetails extends Activity {
 			System.out.println("OnPostExecute...");
 			if (jParser.getResponseCode() == 200) {
 				contentpage_description.setText("");
-				contentpage_description.append("Store Name: " + storename+"\n");
+				contentpage_description.append("Store Name: " + storename
+						+ "\n");
 				contentpage_description.append("Address: "
-						+ storeDetailsDto.getStoreAddress()+"\n");
+						+ storeDetailsDto.getStoreAddress() + "\n");
 				contentpage_description.append("Phone Number: "
-						+ storeDetailsDto.getPhoneNumber()+"\n");
+						+ storeDetailsDto.getPhoneNumber() + "\n");
 				contentpage_description.append("Vicinity: "
-						+ storeDetailsDto.getVicinity()+"\n");
+						+ storeDetailsDto.getVicinity() + "\n");
 				contentpage_description.append("URL: "
-						+ storeDetailsDto.getUrl()+"\n");
+						+ storeDetailsDto.getUrl() + "\n");
 				contentpage_description.append("Website: "
-						+ storeDetailsDto.getWebsite()+"\n");
+						+ storeDetailsDto.getWebsite() + "\n");
 				contentpage_description.append("Rating: "
-						+ storeDetailsDto.getRating()+"\n");
+						+ storeDetailsDto.getRating() + "\n");
 				super.onPostExecute(result);
-			}else{
+			} else {
 				contentpage_description.setText("Store Details Here");
 			}
 			progressDialog.dismiss();
