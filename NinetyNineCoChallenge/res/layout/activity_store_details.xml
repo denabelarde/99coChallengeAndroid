@@ -14,16 +14,16 @@
             android:layout_height="wrap_content"
             android:orientation="vertical" >
 
-            <ImageView
+          <!--   <ImageView
                 android:id="@+id/contentpage_imageView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
                 android:adjustViewBounds="true"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ic_empty" />
+                android:src="@drawable/ic_empty" /> -->
 
-            <TextView
+            <!-- <TextView
                 android:id="@+id/noimage_label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -31,13 +31,14 @@
                 android:paddingBottom="40dp"
                 android:paddingTop="40dp"
                 android:text="@string/nophoto_str"
-                android:textColor="@color/Black" />
+                android:textColor="@color/Black" /> -->
 
             <TextView
                 android:id="@+id/contentpage_description"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="left"
+                android:layout_marginTop="10dp"
                 android:paddingLeft="5dp"
                 android:paddingRight="5dp"
                 android:text="@string/paragraph"

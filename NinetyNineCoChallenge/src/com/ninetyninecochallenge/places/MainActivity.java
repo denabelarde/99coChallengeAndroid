@@ -1,25 +1,36 @@
 package com.ninetyninecochallenge.places;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import android.animation.IntEvaluator;
 import android.animation.ValueAnimator;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -31,12 +42,15 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.ninetyninecochallenge.places.dto.StoreDto;
 import com.ninetyninecochallenge.places.helpers.AlertDialogHelper;
+import com.ninetyninecochallenge.places.helpers.DirectionsJSONParser;
 import com.ninetyninecochallenge.places.helpers.MyLocation;
 
 public class MainActivity extends BaseActivity {
@@ -68,6 +82,8 @@ public class MainActivity extends BaseActivity {
 	int currentStorelistIndex = 0;
 	AlertDialogHelper alertDialogHelper;
 	LatLng userLocation;
+	private ProgressDialog progressDialog;
+	boolean stillPloting = false;
 
 	public MainActivity() {
 		super(R.string.favorites);
@@ -79,7 +95,7 @@ public class MainActivity extends BaseActivity {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.content_frame);
-
+		getActionBar().setIcon(R.drawable.ic_action_favorite_dark);
 		moreResultsBtn = (RelativeLayout) findViewById(R.id.moreResultsBtn);
 		moreResultsBtn.setVisibility(View.GONE);
 		supportMap = ((SupportMapFragment) getSupportFragmentManager()
@@ -95,8 +111,8 @@ public class MainActivity extends BaseActivity {
 	public void showCurrentLocation() {
 
 		if (checkInternetConnection() == true) {
-			Toast.makeText(this, "Retrieving current location....",
-					Toast.LENGTH_LONG).show();
+			// Toast.makeText(this, "Retrieving current location....",
+			// Toast.LENGTH_LONG).show();
 			myLocation = new MyLocation(MainActivity.this);
 			if (myLocation.canGetLocation() == true) {
 				myMap.clear();
@@ -104,7 +120,15 @@ public class MainActivity extends BaseActivity {
 				storeList = new ArrayList<StoreDto>();
 				storeMap = new HashMap<String, StoreDto>();
 				currentStorelistIndex = 0;
+				progressDialog = ProgressDialog.show(
+						MainActivity.this,
+						getResources().getString(R.string.please_wait),
+						getResources().getString(
+								R.string.retrieving_current_location));
+
+				progressDialog.setCancelable(false);
 				myLocation.getLocation();
+
 			} else {
 				myLocation.showSettingsAlert();
 			}
@@ -123,7 +147,6 @@ public class MainActivity extends BaseActivity {
 			// this.lat = lat;
 			// this.longhi = longhi;
 			userLocation = new LatLng(lat, longhi);
-
 			cameraPosition = new CameraPosition(new LatLng(lat, longhi), 15, 0,
 					0);
 			CameraUpdate cameraUpdate = CameraUpdateFactory
@@ -134,36 +157,36 @@ public class MainActivity extends BaseActivity {
 					.position(new LatLng(lat, longhi))
 					.icon(BitmapDescriptorFactory
 							.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-					.title("My Current Location"));
+					.title(getResources()
+							.getString(R.string.mycurrent_location)));
 
-			// circlemarker = myMap.addCircle(new CircleOptions()
-			// .strokeColor(Color.CYAN).radius(100)
-			// .center(new LatLng(lat, longhi)));
+			circlemarker = myMap.addCircle(new CircleOptions()
+					.strokeColor(Color.CYAN).radius(500)
+					.center(new LatLng(lat, longhi)));
 
-			// vAnimator.setRepeatCount(ValueAnimator.INFINITE);
-			// vAnimator.setRepeatMode(ValueAnimator.RESTART); /* PULSE */
-			// vAnimator.setIntValues(0, 100);
-			// vAnimator.setDuration(1300);
-			// vAnimator.setEvaluator(new IntEvaluator());
-			// vAnimator.setInterpolator(new
-			// AccelerateDecelerateInterpolator());
-			// vAnimator
-			// .addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-			// @Override
-			// public void onAnimationUpdate(
-			// ValueAnimator valueAnimator) {
-			// float animatedFraction = valueAnimator
-			// .getAnimatedFraction();
-			// // Log.e("", "" + animatedFraction);
-			//
-			// circlemarker.setRadius(animatedFraction * 100);
-			// // circlemarker.setStrokeWidth(500);
-			// // circlemarker.setStrokeWidth(animatedFraction *
-			// // 100);
-			//
-			// }
-			// });
-			// vAnimator.start();
+			vAnimator.setRepeatCount(ValueAnimator.INFINITE);
+			vAnimator.setRepeatMode(ValueAnimator.RESTART); /* PULSE */
+			vAnimator.setIntValues(0, 600);
+			vAnimator.setDuration(1300);
+			vAnimator.setEvaluator(new IntEvaluator());
+			vAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+			vAnimator
+					.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+						@Override
+						public void onAnimationUpdate(
+								ValueAnimator valueAnimator) {
+							float animatedFraction = valueAnimator
+									.getAnimatedFraction();
+							// Log.e("", "" + animatedFraction);
+
+							circlemarker.setRadius(animatedFraction * 500);
+							// circlemarker.setStrokeWidth(500);
+							// circlemarker.setStrokeWidth(animatedFraction *
+							// 100);
+
+						}
+					});
+			vAnimator.start();
 
 			myMap.setOnInfoWindowClickListener(new OnInfoWindowClickListener() {
 
@@ -173,8 +196,9 @@ public class MainActivity extends BaseActivity {
 
 					System.out.println(arg0.getId() + " <--- MarkerID");
 
-					if (!arg0.getTitle()
-							.equalsIgnoreCase("My Current Location")) {
+					if (!arg0.getTitle().equalsIgnoreCase(
+							getResources().getString(
+									R.string.mycurrent_location))) {
 						if (!arg0.getId().isEmpty()) {
 							Intent intent = new Intent(MainActivity.this,
 									StoreDetails.class);
@@ -273,12 +297,18 @@ public class MainActivity extends BaseActivity {
 		protected void onPreExecute() {
 			// TODO Auto-generated method stub
 			if (nextPageToken.isEmpty()) {
-				Toast.makeText(MainActivity.this,
-						"Retrieving nearest shops....", Toast.LENGTH_LONG)
-						.show();
+
+				progressDialog.setMessage(getResources().getString(
+						R.string.retrieving_nearest_stores));
 			} else {
-				Toast.makeText(MainActivity.this, "Retrieving more shops....",
-						Toast.LENGTH_LONG).show();
+
+				progressDialog = ProgressDialog.show(
+						MainActivity.this,
+						getResources().getString(R.string.please_wait),
+						getResources().getString(
+								R.string.retrieving_more_stores));
+
+				progressDialog.setCancelable(false);
 			}
 
 			System.out.println("Started the asynctask");
@@ -343,17 +373,30 @@ public class MainActivity extends BaseActivity {
 		@Override
 		protected void onPostExecute(String result) {
 			// TODO Auto-generated method stub
-			Toast.makeText(MainActivity.this, "Plotting shops on map....",
-					Toast.LENGTH_LONG).show();
-			if (nextPageToken.isEmpty()) {
-				moreResultsBtn.setVisibility(View.GONE);
+			// Toast.makeText(MainActivity.this, "Plotting shops on map....",
+			// Toast.LENGTH_LONG).show();
 
+			if (jParser.getResponseCode() == 200) {
+				progressDialog.setMessage(getResources().getString(
+						R.string.plottingstores_on_map));
+				if (nextPageToken.isEmpty()) {
+					moreResultsBtn.setVisibility(View.GONE);
+
+				} else {
+					moreResultsBtn.setVisibility(View.VISIBLE);
+
+				}
+				invalidateOptionsMenu();
+				plotAllStores();
 			} else {
-				moreResultsBtn.setVisibility(View.VISIBLE);
-
+				progressDialog.dismiss();
+				alertDialogHelper.alertMessage(
+						getResources().getString(R.string.error),
+						getResources().getString(
+								R.string.error_retrieving_stores),
+						MainActivity.this);
 			}
-			invalidateOptionsMenu();
-			plotAllStores();
+
 			super.onPostExecute(result);
 		}
 	}
@@ -362,20 +405,16 @@ public class MainActivity extends BaseActivity {
 
 		System.out.print(currentStorelistIndex
 				+ " <<<<<<<<< currentStorelistIndex");
-		int y = currentStorelistIndex;
-		for (int x = y; x < storeList.size(); x++) {
-			new addMarkerAsync(storeList.get(x)).execute();
-			currentStorelistIndex++;
-		}
-		currentStorelistIndex++;
+
+		new addMultipleStoreMarkersAsync().execute();
 	}
 
-	class addMarkerAsync extends AsyncTask<Void, Void, Void> {
+	class addMultipleStoreMarkersAsync extends AsyncTask<Void, Void, Void> {
 		Bitmap bmp;
-		StoreDto storeDto;
+		ArrayList<Bitmap> iconBitmapList;
 
-		public addMarkerAsync(StoreDto storeDto) {
-			this.storeDto = storeDto;
+		public addMultipleStoreMarkersAsync() {
+
 		}
 
 		@Override
@@ -387,14 +426,24 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		protected Void doInBackground(Void... params) {
-			URL url;
-			try {
-				url = new URL(storeDto.getIcon());
-				bmp = BitmapFactory.decodeStream(url.openConnection()
-						.getInputStream());
-			} catch (Exception e) {
-				e.printStackTrace();
+			iconBitmapList = new ArrayList<Bitmap>();
+
+			int y = currentStorelistIndex;
+			for (int x = y; x < storeList.size(); x++) {
+				// new addMarkerAsync(storeList.get(x)).execute();
+
+				URL url;
+				try {
+					url = new URL(storeList.get(x).getIcon());
+					bmp = BitmapFactory.decodeStream(url.openConnection()
+							.getInputStream());
+					iconBitmapList.add(bmp);
+				} catch (Exception e) {
+					e.printStackTrace();
+					iconBitmapList.add(null);
+				}
 			}
+
 			return null;
 		}
 
@@ -402,19 +451,145 @@ public class MainActivity extends BaseActivity {
 		protected void onPostExecute(Void result) {
 
 			super.onPostExecute(result);
+			int y = currentStorelistIndex;
+			int bitmapCounter = 0;
+			for (int x = y; x < storeList.size(); x++) {
+				// new addMarkerAsync(storeList.get(x)).execute();
+				String markerID = "";
+				if (iconBitmapList.get(bitmapCounter) != null) {
+					markerID = myMap.addMarker(
+							new MarkerOptions()
+									.position(
+											new LatLng(storeList.get(x)
+													.getLat(), storeList.get(x)
+													.getLonghi()))
+									.icon(BitmapDescriptorFactory
+											.fromBitmap(bmp))
+									.title(storeList.get(x).getName())
+									.snippet(
+											storeList.get(x).getLat()
+													+ ","
+													+ storeList.get(x)
+															.getLonghi()))
+							.getId();
 
-			String markerID = myMap.addMarker(
-					new MarkerOptions()
-							.position(
-									new LatLng(storeDto.getLat(), storeDto
-											.getLonghi()))
-							.icon(BitmapDescriptorFactory.fromBitmap(bmp))
-							.title(storeDto.getName())
-							.snippet(
-									storeDto.getLat() + ","
-											+ storeDto.getLonghi())).getId();
+				} else {
+					markerID = myMap
+							.addMarker(
+									new MarkerOptions()
+											.position(
+													new LatLng(
+															storeList.get(x)
+																	.getLat(),
+															storeList
+																	.get(x)
+																	.getLonghi()))
+											.icon(BitmapDescriptorFactory
+													.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+											.title(storeList.get(x).getName())
+											.snippet(
+													storeList.get(x).getLat()
+															+ ","
+															+ storeList
+																	.get(x)
+																	.getLonghi()))
+							.getId();
+
+				}
+				System.out.println(markerID + " <===MarkerID");
+				if (!markerID.isEmpty()) {
+					storeMap.put(markerID, storeList.get(x));
+				}
+				bitmapCounter++;
+				currentStorelistIndex++;
+			}
+			currentStorelistIndex++;
+			progressDialog.dismiss();
+		}
+	}
+
+	class addSingleStoreMarker extends AsyncTask<Void, Void, Void> {
+		Bitmap bmp;
+		StoreDto storeDto;
+
+		public addSingleStoreMarker(StoreDto storeDto) {
+			this.storeDto = storeDto;
+		}
+
+		@Override
+		protected void onPreExecute() {
+			// TODO Auto-generated method stub
+			progressDialog = ProgressDialog.show(
+					MainActivity.this,
+					getResources().getString(R.string.please_wait),
+					getResources().getString(
+							R.string.creating_markers_waypoints));
+
+			progressDialog.setCancelable(false);
+			super.onPreExecute();
+
+		}
+
+		@Override
+		protected Void doInBackground(Void... params) {
+
+			// new addMarkerAsync(storeList.get(x)).execute();
+
+			URL url;
+			try {
+				url = new URL(storeDto.getIcon());
+				bmp = BitmapFactory.decodeStream(url.openConnection()
+						.getInputStream());
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				bmp = null;
+			}
+
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+
+			super.onPostExecute(result);
+			String markerID = "";
+			if (bmp != null) {
+				markerID = myMap.addMarker(
+						new MarkerOptions()
+								.position(
+										new LatLng(storeDto.getLat(), storeDto
+												.getLonghi()))
+								.icon(BitmapDescriptorFactory.fromBitmap(bmp))
+								.title(storeDto.getName())
+								.snippet(
+										storeDto.getLat() + ","
+												+ storeDto.getLonghi()))
+						.getId();
+
+			} else {
+
+				markerID = myMap
+						.addMarker(
+								new MarkerOptions()
+										.position(
+												new LatLng(storeDto.getLat(),
+														storeDto.getLonghi()))
+										.icon(BitmapDescriptorFactory
+												.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+										.title(storeDto.getName())
+										.snippet(
+												storeDto.getLat() + ","
+														+ storeDto.getLonghi()))
+						.getId();
+			}
+
 			System.out.println(markerID + " <===MarkerID");
-			storeMap.put(markerID, storeDto);
+			if (!markerID.isEmpty()) {
+				storeMap.put(markerID, storeDto);
+			}
+
+			progressDialog.dismiss();
 		}
 	}
 
@@ -463,4 +638,227 @@ public class MainActivity extends BaseActivity {
 		}
 
 	}
+
+	// WAYPOINT CREATION METHODS OR CODES
+	public void plotUserLocationAndFavoriteStore(LatLng dest, StoreDto storeDto) {
+		if (checkInternetConnection() == true) {
+			myMap.clear();
+			nextPageToken = "";
+			storeList = new ArrayList<StoreDto>();
+			storeMap = new HashMap<String, StoreDto>();
+			currentStorelistIndex = 0;
+			getSlidingMenu().toggle();
+			moreResultsBtn.setVisibility(View.GONE);
+
+			storeList.add(storeDto);
+			cameraPosition = new CameraPosition(new LatLng(
+					userLocation.latitude, userLocation.longitude), 15, 0, 0);
+			CameraUpdate cameraUpdate = CameraUpdateFactory
+					.newCameraPosition(cameraPosition);
+			myMap.animateCamera(cameraUpdate);
+
+			myMap.addMarker(new MarkerOptions()
+					.position(
+							new LatLng(userLocation.latitude,
+									userLocation.longitude))
+					.icon(BitmapDescriptorFactory
+							.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+					.title("My Current Location"));
+
+			new addSingleStoreMarker(storeDto).execute();
+
+			// Getting URL to the Google Directions API
+			String url = getDirectionsUrl(userLocation, dest);
+
+			DownloadTask downloadTask = new DownloadTask();
+
+			// Start downloading json data from Google Directions API
+			downloadTask.execute(url);
+		} else {
+			alertDialogHelper.alertMessage(
+					getResources().getString(R.string.nointernet_string),
+					getResources().getString(R.string.nointernet_description),
+					MainActivity.this);
+		}
+
+	}
+
+	// Fetches data from url passed
+	private class DownloadTask extends AsyncTask<String, Void, String> {
+
+		// Downloading data in non-ui thread
+		@Override
+		protected String doInBackground(String... url) {
+
+			// For storing data from web service
+			String data = "";
+
+			try {
+				// Fetching the data from web service
+				data = downloadUrl(url[0]);
+			} catch (Exception e) {
+				Log.d("Background Task", e.toString());
+			}
+			return data;
+		}
+
+		// Executes in UI thread, after the execution of
+		// doInBackground()
+		@Override
+		protected void onPostExecute(String result) {
+			super.onPostExecute(result);
+
+			ParserTask parserTask = new ParserTask();
+
+			// Invokes the thread for parsing the JSON data
+			parserTask.execute(result);
+
+		}
+	}
+
+	/** A method to download json data from url */
+	private String downloadUrl(String strUrl) throws IOException {
+		String data = "";
+		InputStream iStream = null;
+		HttpURLConnection urlConnection = null;
+		try {
+			URL url = new URL(strUrl);
+
+			// Creating an http connection to communicate with url
+			urlConnection = (HttpURLConnection) url.openConnection();
+
+			// Connecting to url
+			urlConnection.connect();
+
+			// Reading data from url
+			iStream = urlConnection.getInputStream();
+
+			BufferedReader br = new BufferedReader(new InputStreamReader(
+					iStream));
+
+			StringBuffer sb = new StringBuffer();
+
+			String line = "";
+			while ((line = br.readLine()) != null) {
+				sb.append(line);
+			}
+
+			data = sb.toString();
+
+			br.close();
+
+		} catch (Exception e) {
+			Log.d("Exception while downloading url", e.toString());
+		} finally {
+			iStream.close();
+			urlConnection.disconnect();
+		}
+		return data;
+	}
+
+	/** A class to parse the Google Places in JSON format */
+	private class ParserTask extends
+			AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
+
+		// Parsing the data in non-ui thread
+		@Override
+		protected List<List<HashMap<String, String>>> doInBackground(
+				String... jsonData) {
+
+			JSONObject jObject;
+			List<List<HashMap<String, String>>> routes = null;
+
+			try {
+				jObject = new JSONObject(jsonData[0]);
+				DirectionsJSONParser parser = new DirectionsJSONParser();
+
+				// Starts parsing data
+				routes = parser.parse(jObject);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return routes;
+		}
+
+		// Executes in UI thread, after the parsing process
+		@Override
+		protected void onPostExecute(List<List<HashMap<String, String>>> result) {
+
+			try {
+				ArrayList<LatLng> points = null;
+				PolylineOptions lineOptions = null;
+
+				// Traversing through all the routes
+				for (int i = 0; i < result.size(); i++) {
+					points = new ArrayList<LatLng>();
+					lineOptions = new PolylineOptions();
+
+					// Fetching i-th route
+					List<HashMap<String, String>> path = result.get(i);
+
+					// Fetching all the points in i-th route
+					for (int j = 0; j < path.size(); j++) {
+						HashMap<String, String> point = path.get(j);
+
+						double lat = Double.parseDouble(point.get("lat"));
+						double lng = Double.parseDouble(point.get("lng"));
+						LatLng position = new LatLng(lat, lng);
+
+						points.add(position);
+					}
+
+					// Adding all the points in the route to LineOptions
+					lineOptions.addAll(points);
+					lineOptions.width(2);
+					lineOptions.color(Color.RED);
+				}
+
+				// Drawing polyline in the Google Map for the i-th route
+				myMap.addPolyline(lineOptions);
+			} catch (Exception e) {
+				alertDialogHelper.alertMessage(
+						getResources().getString(R.string.error),
+						getResources().getString(R.string.waypoint_error),
+						MainActivity.this);
+			}
+
+			progressDialog.dismiss();
+		}
+	}
+
+	private String getDirectionsUrl(LatLng origin, LatLng dest) {
+
+		// Origin of route
+		String str_origin = "origin=" + origin.latitude + ","
+				+ origin.longitude;
+
+		// Destination of route
+		String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
+
+		// Sensor enabled
+		String sensor = "sensor=false";
+
+		// Waypoints
+		String waypoints = "";
+		// for (int i = 2; i < markerPoints.size(); i++) {
+		// LatLng point = (LatLng) markerPoints.get(i);
+		// if (i == 2)
+		waypoints = "waypoints=";
+		waypoints += origin.latitude + "," + origin.longitude + "|";
+		// }
+		waypoints += dest.latitude + "," + dest.longitude + "|";
+		// Building the parameters to the web service
+		String parameters = str_origin + "&" + str_dest + "&" + sensor + "&"
+				+ waypoints;
+
+		// Output format
+		String output = "json";
+
+		// Building the url to the web service
+		String url = "https://maps.googleapis.com/maps/api/directions/"
+				+ output + "?" + parameters;
+
+		return url;
+	}
+
 }

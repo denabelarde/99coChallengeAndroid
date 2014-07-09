@@ -270,10 +270,11 @@ public class StoreDetails extends Activity {
 		protected void onPostExecute(String result) {
 			// TODO Auto-generated method stub
 			System.out.println("OnPostExecute...");
+			contentpage_description.setText("Store Name: " + storename
+					+ "\n");
 			if (jParser.getResponseCode() == 200) {
-				contentpage_description.setText("");
-				contentpage_description.append("Store Name: " + storename
-						+ "\n");
+//				contentpage_description.setText("");
+				
 				contentpage_description.append("Address: "
 						+ storeDetailsDto.getStoreAddress() + "\n");
 				contentpage_description.append("Phone Number: "
@@ -288,7 +289,7 @@ public class StoreDetails extends Activity {
 						+ storeDetailsDto.getRating() + "\n");
 				super.onPostExecute(result);
 			} else {
-				contentpage_description.setText("Store Details Here");
+				contentpage_description.append("No store details loaded! Please try again.");
 			}
 			progressDialog.dismiss();
 		}

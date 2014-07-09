@@ -11,11 +11,21 @@
     <string name="favorites">List of favorites</string>
     <string name="more_results">more results</string>
     <string name="add_to_favorites">Add to favorites</string>
-    <string name="paragraph">Store Details Here</string>
+    <string name="paragraph">No store details loaded! Please try again.</string>
     <string name="nophoto_str">No Photo Available</string>
     <string name="apikey">AIzaSyCkkNyh0sCgVyXMwvrsg4Gb1w7CxlH1RUg</string>
     <string name="refresh_location">Refresh Current Location</string>
     <string name="load_more_results">Load more results</string>
     <string name="nointernet_description">No internet detected! Please connect to a wifi/mobile data network to obtain best results</string>
 	<string name="nointernet_string">No Internet Connection!</string>
+	<string name="mycurrent_location">My Current Location</string>
+	<string name="retrieving_current_location">Retrieving current location…</string>
+	<string name="please_wait">Please wait…</string>
+	<string name="retrieving_nearest_stores">Retrieving nearest stores…</string>
+	<string name="retrieving_more_stores">Retrieving more stores…</string>
+	<string name="creating_markers_waypoints">Creating markers and waypoints…</string>
+	<string name="error_retrieving_stores">Error retrieving stores! Please try again.</string>
+	<string name="error">Error!</string>
+	<string name="plottingstores_on_map">Plotting stores on map…</string>
+	<string name="waypoint_error">Cannot draw waypoint! Please check internet your connection.</string>
 </resources>
