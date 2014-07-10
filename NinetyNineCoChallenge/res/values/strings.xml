@@ -28,4 +28,8 @@
 	<string name="error">Error!</string>
 	<string name="plottingstores_on_map">Plotting stores on map…</string>
 	<string name="waypoint_error">Cannot draw waypoint! Please check internet your connection.</string>
+	<string name="walking">Walking</string>
+	<string name="driving">Driving</string>
+	<string name="bicycling">Bicycling</string>
+	<string name="transit">Transit</string>
 </resources>

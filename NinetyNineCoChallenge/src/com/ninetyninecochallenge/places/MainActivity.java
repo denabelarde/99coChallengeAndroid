@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import android.animation.IntEvaluator;
 import android.animation.ValueAnimator;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -27,10 +28,16 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -84,6 +91,7 @@ public class MainActivity extends BaseActivity {
 	LatLng userLocation;
 	private ProgressDialog progressDialog;
 	boolean stillPloting = false;
+	Dialog selectTravelMode;
 
 	public MainActivity() {
 		super(R.string.favorites);
@@ -640,40 +648,87 @@ public class MainActivity extends BaseActivity {
 	}
 
 	// WAYPOINT CREATION METHODS OR CODES
-	public void plotUserLocationAndFavoriteStore(LatLng dest, StoreDto storeDto) {
+	// public void plotUserLocationAndFavoriteStore(LatLng dest, StoreDto
+	// storeDto) {
+	// if (checkInternetConnection() == true) {
+	//
+	// } else {
+	// alertDialogHelper.alertMessage(
+	// getResources().getString(R.string.nointernet_string),
+	// getResources().getString(R.string.nointernet_description),
+	// MainActivity.this);
+	// }
+	//
+	// }
+
+	public void plotUserLocationAndFavoriteStore(final LatLng dest,
+			final StoreDto storeDto) {
+
 		if (checkInternetConnection() == true) {
-			myMap.clear();
-			nextPageToken = "";
-			storeList = new ArrayList<StoreDto>();
-			storeMap = new HashMap<String, StoreDto>();
-			currentStorelistIndex = 0;
-			getSlidingMenu().toggle();
-			moreResultsBtn.setVisibility(View.GONE);
+			LayoutInflater inflater = (LayoutInflater) getLayoutInflater();
+			final ArrayList<String> travelModeList = new ArrayList<String>();
+			travelModeList.add(getResources().getString(R.string.walking));
+			travelModeList.add(getResources().getString(R.string.driving));
+//			travelModeList.add(getResources().getString(R.string.bicycling));
+//			travelModeList.add(getResources().getString(R.string.transit));
+			ArrayAdapter<String> listadapter = new ArrayAdapter<String>(this,
+					R.layout.list_item, travelModeList);
+			View customView = inflater.inflate(R.layout.waypointmode_dialog,
+					null);
 
-			storeList.add(storeDto);
-			cameraPosition = new CameraPosition(new LatLng(
-					userLocation.latitude, userLocation.longitude), 15, 0, 0);
-			CameraUpdate cameraUpdate = CameraUpdateFactory
-					.newCameraPosition(cameraPosition);
-			myMap.animateCamera(cameraUpdate);
+			ListView modeList = (ListView) customView
+					.findViewById(R.id.numberlist);
+			modeList.setAdapter(listadapter);
+			modeList.setOnItemClickListener(new OnItemClickListener() {
+				public void onItemClick(AdapterView<?> myAdapter, View myView,
+						int myItemInt, long mylng) {
+					myMap.clear();
+					nextPageToken = "";
+					storeList = new ArrayList<StoreDto>();
+					storeMap = new HashMap<String, StoreDto>();
+					currentStorelistIndex = 0;
+					getSlidingMenu().toggle();
+					moreResultsBtn.setVisibility(View.GONE);
 
-			myMap.addMarker(new MarkerOptions()
-					.position(
-							new LatLng(userLocation.latitude,
-									userLocation.longitude))
-					.icon(BitmapDescriptorFactory
-							.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-					.title("My Current Location"));
+					storeList.add(storeDto);
+					cameraPosition = new CameraPosition(new LatLng(
+							userLocation.latitude, userLocation.longitude), 15,
+							0, 0);
+					CameraUpdate cameraUpdate = CameraUpdateFactory
+							.newCameraPosition(cameraPosition);
+					myMap.animateCamera(cameraUpdate);
 
-			new addSingleStoreMarker(storeDto).execute();
+					myMap.addMarker(new MarkerOptions()
+							.position(
+									new LatLng(userLocation.latitude,
+											userLocation.longitude))
+							.icon(BitmapDescriptorFactory
+									.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+							.title("My Current Location"));
 
-			// Getting URL to the Google Directions API
-			String url = getDirectionsUrl(userLocation, dest);
+					new addSingleStoreMarker(storeDto).execute();
 
-			DownloadTask downloadTask = new DownloadTask();
+					// Getting URL to the Google Directions API
+					String url = getDirectionsUrl(userLocation, dest,
+							travelModeList.get(myItemInt).toLowerCase());
 
-			// Start downloading json data from Google Directions API
-			downloadTask.execute(url);
+					DownloadTask downloadTask = new DownloadTask();
+
+					// Start downloading json data from Google Directions API
+					downloadTask.execute(url);
+					selectTravelMode.dismiss();
+				}
+			});
+
+			// Build the dialog
+			selectTravelMode = new Dialog(this);
+			// selectModelDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+			selectTravelMode.setContentView(customView);
+			selectTravelMode.getWindow().setSoftInputMode(
+					WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+			selectTravelMode.setTitle("SELECT MODE OF TRAVEL");
+
+			selectTravelMode.show();
 		} else {
 			alertDialogHelper.alertMessage(
 					getResources().getString(R.string.nointernet_string),
@@ -826,7 +881,8 @@ public class MainActivity extends BaseActivity {
 		}
 	}
 
-	private String getDirectionsUrl(LatLng origin, LatLng dest) {
+	private String getDirectionsUrl(LatLng origin, LatLng dest,
+			String travelmode) {
 
 		// Origin of route
 		String str_origin = "origin=" + origin.latitude + ","
@@ -853,10 +909,10 @@ public class MainActivity extends BaseActivity {
 
 		// Output format
 		String output = "json";
-
+		String modeOfTravel = "&mode=";
 		// Building the url to the web service
 		String url = "https://maps.googleapis.com/maps/api/directions/"
-				+ output + "?" + parameters;
+				+ output + "?" + parameters + modeOfTravel + travelmode;
 
 		return url;
 	}
